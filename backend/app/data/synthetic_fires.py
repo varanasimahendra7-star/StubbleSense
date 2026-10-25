@@ -4,6 +4,9 @@ from app.schemas.fire_event import FireObservation
 # Deterministic synthetic dataset representing agricultural residue burning observations
 # in the Punjab and Haryana agricultural belt.
 # NOTICE: All observations in this list are purely synthetic and generated for demonstration.
+DEMO_REFERENCE_DATE = "2026-10-25"
+DEMO_PREVIOUS_DATE = "2026-10-24"
+
 SYNTHETIC_FIRE_EVENTS: List[dict] = [
     {
         "id": "DEMO-FIRE-2026-001",

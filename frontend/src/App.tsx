@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getHealthStatus } from './api/health';
 import { FireMap } from './components/FireMap';
+import { VillageRiskRanking } from './components/VillageRiskRanking';
 import { API_BASE_URL } from './config';
 import type { BackendStatus, HealthResponse, NavigationTab } from './types/api';
 import './App.css';
@@ -483,58 +484,17 @@ export function App() {
             className="tab-panel"
           >
             <div className="section-header">
-              <h2>District &amp; Tehsil Risk Ranking</h2>
+              <h2>Explainable Village Risk Rankings</h2>
               <p className="section-description">
-                Vulnerability index calculated from harvest schedules, soil moisture, and localized burn probability.
+                Deterministic agricultural residue risk ranking calculated from thermal proximity, satellite confidence, observation recency, and combustion intensity.
               </p>
             </div>
 
-            <div className="placeholder-container">
-              <div className="placeholder-badge">Planned Milestone 5</div>
-              <div className="table-preview-wrapper">
-                <table className="demo-table" aria-label="Demo Risk Ranking Preview">
-                  <thead>
-                    <tr>
-                      <th scope="col">Priority</th>
-                      <th scope="col">District</th>
-                      <th scope="col">State</th>
-                      <th scope="col">Risk Index</th>
-                      <th scope="col">Harvest Stage</th>
-                      <th scope="col">Advisory Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><span className="priority-badge critical">#1</span></td>
-                      <td><strong>Sangrur</strong></td>
-                      <td>Punjab</td>
-                      <td><span className="risk-score high">0.94</span></td>
-                      <td>Late Harvest (Residue exposed)</td>
-                      <td>Deploy Happy Seeder subsidy fleet</td>
-                    </tr>
-                    <tr>
-                      <td><span className="priority-badge high">#2</span></td>
-                      <td><strong>Firozpur</strong></td>
-                      <td>Punjab</td>
-                      <td><span className="risk-score high">0.88</span></td>
-                      <td>Peak Combine Operation</td>
-                      <td>Dispatch nodal officer patrol</td>
-                    </tr>
-                    <tr>
-                      <td><span className="priority-badge medium">#3</span></td>
-                      <td><strong>Kaithal</strong></td>
-                      <td>Haryana</td>
-                      <td><span className="risk-score medium">0.76</span></td>
-                      <td>Mid Harvest</td>
-                      <td>Alert panchayat monitoring unit</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <p className="placeholder-meta">
-                Dynamic risk calculation engine will compute hourly rankings via backend API endpoints.
-              </p>
-            </div>
+            <VillageRiskRanking
+              onNavigateToMap={() => {
+                setActiveTab('map');
+              }}
+            />
           </section>
         )}
 
