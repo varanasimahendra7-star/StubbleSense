@@ -12,10 +12,10 @@ app = FastAPI(
     description="StubbleSense Backend API",
 )
 
-# Enable CORS for frontend integration
+# Enable CORS narrowly for trusted frontend origins (no wildcard with credentials)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
