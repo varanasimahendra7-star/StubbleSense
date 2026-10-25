@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.equipment import router as equipment_router
 from app.api.fire_events import router as fire_events_router
 from app.api.health import router as health_router
 from app.api.villages import router as villages_router
@@ -26,3 +27,4 @@ app.add_middleware(
 app.include_router(health_router, prefix="/api")
 app.include_router(fire_events_router, prefix="/api")
 app.include_router(villages_router, prefix="/api")
+app.include_router(equipment_router, prefix="/api")

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { getHealthStatus } from './api/health';
 import { FireMap } from './components/FireMap';
 import { VillageRiskRanking } from './components/VillageRiskRanking';
+import { EquipmentAllocation } from './components/EquipmentAllocation';
 import { API_BASE_URL } from './config';
 import type { BackendStatus, HealthResponse, NavigationTab } from './types/api';
 import './App.css';
@@ -204,13 +205,13 @@ export function App() {
           </li>
           <li role="presentation">
             <button
-              id="tab-cases"
+              id="tab-allocation"
               role="tab"
               type="button"
-              className={`nav-item ${activeTab === 'cases' ? 'active' : ''}`}
-              aria-selected={activeTab === 'cases'}
-              aria-controls="panel-cases"
-              onClick={() => setActiveTab('cases')}
+              className={`nav-item ${activeTab === 'allocation' ? 'active' : ''}`}
+              aria-selected={activeTab === 'allocation'}
+              aria-controls="panel-allocation"
+              onClick={() => setActiveTab('allocation')}
             >
               <svg
                 className="nav-icon"
@@ -220,10 +221,9 @@ export function App() {
                 strokeWidth="2"
                 aria-hidden="true"
               >
-                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
-              <span>Officer Cases</span>
+              <span>Equipment Allocation</span>
             </button>
           </li>
         </ul>
@@ -439,19 +439,19 @@ export function App() {
               <div className="feature-card">
                 <div className="feature-icon-wrapper case-accent" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                   </svg>
                 </div>
-                <h3>Officer Action Workflows</h3>
+                <h3>Residue Equipment Allocation</h3>
                 <p>
-                  Direct dispatch queues for agricultural field officers to conduct spot audits, issue notices, and record mitigations.
+                  Proximity-based Custom Hiring Center advisor matching high-risk villages with nearby Happy Seeders, balers, and mulchers.
                 </p>
                 <button
                   type="button"
                   className="card-action-button"
-                  onClick={() => setActiveTab('cases')}
+                  onClick={() => setActiveTab('allocation')}
                 >
-                  View Case Queue &rarr;
+                  Allocate Equipment &rarr;
                 </button>
               </div>
             </div>
@@ -498,46 +498,25 @@ export function App() {
           </section>
         )}
 
-        {activeTab === 'cases' && (
+        {activeTab === 'allocation' && (
           <section
-            id="panel-cases"
+            id="panel-allocation"
             role="tabpanel"
-            aria-labelledby="tab-cases"
+            aria-labelledby="tab-allocation"
             className="tab-panel"
           >
             <div className="section-header">
-              <h2>Officer Enforcement Cases</h2>
+              <h2>Residue Management Equipment Allocation</h2>
               <p className="section-description">
-                Field verification registry for agricultural nodal officers, satellite anomaly correlation, and incident actions.
+                Proximity-based Custom Hiring Center machinery advisor recommending Happy Seeders, balers, and mulchers to mitigate crop residue burning.
               </p>
             </div>
 
-            <div className="placeholder-container">
-              <div className="placeholder-badge">Planned Milestone 6</div>
-              <div className="cases-cards-preview">
-                <div className="case-card-preview">
-                  <div className="case-card-top">
-                    <span className="case-id">CASE-PB-2026-081</span>
-                    <span className="status-badge pending">Under Inspection</span>
-                  </div>
-                  <h4>Tarn Taran — Sector 4 Farm Cluster</h4>
-                  <p className="case-meta">Detected: Today 08:32 IST | Officer: S. Sandhu (Dispatched)</p>
-                  <p className="case-notes">Thermal anomaly verified by S-NPP pass. Field officer en route for GPS geotagged report.</p>
-                </div>
-                <div className="case-card-preview">
-                  <div className="case-card-top">
-                    <span className="case-id">CASE-HR-2026-042</span>
-                    <span className="status-badge resolved">Resolved / Ex-situ</span>
-                  </div>
-                  <h4>Karnal — Village Nilokheri</h4>
-                  <p className="case-meta">Detected: Yesterday 16:15 IST | Officer: R. Verma</p>
-                  <p className="case-notes">Farmer opted for baler machine collection under bio-mass plant supply agreement.</p>
-                </div>
-              </div>
-              <p className="placeholder-meta">
-                Full CRUD case lifecycle management with SQLite persistence will be integrated in subsequent milestones.
-              </p>
-            </div>
+            <EquipmentAllocation
+              onNavigateToMap={() => {
+                setActiveTab('map');
+              }}
+            />
           </section>
         )}
       </main>

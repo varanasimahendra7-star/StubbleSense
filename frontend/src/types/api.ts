@@ -6,7 +6,7 @@ export interface HealthResponse {
 
 export type BackendStatus = 'loading' | 'connected' | 'unavailable';
 
-export type NavigationTab = 'overview' | 'map' | 'risk' | 'cases';
+export type NavigationTab = 'overview' | 'map' | 'risk' | 'allocation';
 
 export interface FireObservation {
   id: string;
@@ -65,3 +65,44 @@ export interface RiskFilterOptions {
   sortBy: 'score_desc' | 'score_asc' | 'name' | 'district';
   searchQuery: string;
 }
+
+export type EquipmentStatus = 'Available' | 'In-Use' | 'Maintenance' | string;
+
+export interface EquipmentItem {
+  id: string;
+  name: string;
+  equipment_type: string;
+  category: string;
+  hub_name: string;
+  district: string;
+  state: string;
+  latitude: number;
+  longitude: number;
+  status: EquipmentStatus;
+  capacity_acres_per_day: number;
+  daily_rental_inr: number;
+  contact_officer: string;
+  is_synthetic: boolean;
+}
+
+export interface EquipmentRecommendation {
+  equipment: EquipmentItem;
+  distance_km: number;
+  suitability_score: number;
+  recommendation_reasons: string[];
+  caution_notice: string;
+}
+
+export interface EquipmentListResponse {
+  total: number;
+  data_notice: string;
+  items: EquipmentItem[];
+}
+
+export interface VillageAllocationResponse {
+  village: VillageRiskItem;
+  total_recommendations: number;
+  data_notice: string;
+  recommendations: EquipmentRecommendation[];
+}
+
