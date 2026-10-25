@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getHealthStatus } from './api/health';
+import { FireMap } from './components/FireMap';
 import { API_BASE_URL } from './config';
 import type { BackendStatus, HealthResponse, NavigationTab } from './types/api';
 import './App.css';
@@ -11,6 +12,7 @@ export function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
   const [isRetrying, setIsRetrying] = useState<boolean>(false);
+  const [fireEventCount, setFireEventCount] = useState<number>(16);
 
   const checkHealth = useCallback(async () => {
     setIsRetrying(true);
@@ -360,8 +362,8 @@ export function App() {
                   <span className="stat-label">Active Burn Clusters</span>
                   <span className="stat-pill alert">Demo Feed</span>
                 </div>
-                <div className="stat-number">24</div>
-                <p className="stat-detail">Thermal anomalies detected within last 12 hours</p>
+                <div className="stat-number">{fireEventCount}</div>
+                <p className="stat-detail">Thermal observations in Punjab &amp; Haryana demo dataset</p>
               </div>
 
               <div className="stat-card">
@@ -463,33 +465,13 @@ export function App() {
             className="tab-panel"
           >
             <div className="section-header">
-              <h2>Satellite Fire Hotspot Map</h2>
+              <h2>Interactive Fire Hotspot Map</h2>
               <p className="section-description">
-                Interactive spatial layer displaying active thermal anomalies, FIRMS telemetry, and wind trajectories.
+                Interactive spatial visualization of agricultural residue burning observations across Punjab and Haryana.
               </p>
             </div>
 
-            <div className="placeholder-container map-placeholder">
-              <div className="placeholder-badge">Planned Milestone 4</div>
-              <div className="map-grid-graphic" aria-hidden="true">
-                <div className="map-coordinate-line lat-1" />
-                <div className="map-coordinate-line lat-2" />
-                <div className="map-coordinate-line lon-1" />
-                <div className="map-coordinate-line lon-2" />
-                <div className="simulated-hotspot hotspot-1" title="Simulated Hotspot 31.14°N, 75.34°E" />
-                <div className="simulated-hotspot hotspot-2" title="Simulated Hotspot 30.22°N, 74.95°E" />
-                <div className="simulated-hotspot hotspot-3" title="Simulated Hotspot 29.88°N, 76.41°E" />
-              </div>
-              <div className="placeholder-content">
-                <h3>Punjab &amp; Haryana Geographic Bounding Box</h3>
-                <p>
-                  Coordinates: <code>29.5°N - 32.5°N, 73.8°E - 77.2°E</code>
-                </p>
-                <p className="placeholder-meta">
-                  Will integrate Leaflet / MapLibre GL with real NASA FIRMS VIIRS 375m active fire data.
-                </p>
-              </div>
-            </div>
+            <FireMap onEventCountUpdate={setFireEventCount} />
           </section>
         )}
 
