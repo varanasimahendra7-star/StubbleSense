@@ -3,6 +3,7 @@ import { getHealthStatus } from './api/health';
 import { FireMap } from './components/FireMap';
 import { VillageRiskRanking } from './components/VillageRiskRanking';
 import { EquipmentAllocation } from './components/EquipmentAllocation';
+import { InterventionTracking } from './components/InterventionTracking';
 import { API_BASE_URL } from './config';
 import type { BackendStatus, HealthResponse, NavigationTab } from './types/api';
 import './App.css';
@@ -224,6 +225,31 @@ export function App() {
                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
               <span>Equipment Allocation</span>
+            </button>
+          </li>
+          <li role="presentation">
+            <button
+              id="tab-tracking"
+              role="tab"
+              type="button"
+              className={`nav-item ${activeTab === 'tracking' ? 'active' : ''}`}
+              aria-selected={activeTab === 'tracking'}
+              aria-controls="panel-tracking"
+              onClick={() => setActiveTab('tracking')}
+            >
+              <svg
+                className="nav-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                <path d="m9 14 2 2 4-4" />
+              </svg>
+              <span>Field Verification</span>
             </button>
           </li>
         </ul>
@@ -454,6 +480,27 @@ export function App() {
                   Allocate Equipment &rarr;
                 </button>
               </div>
+
+              <div className="feature-card">
+                <div className="feature-icon-wrapper case-accent" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                    <path d="m9 14 2 2 4-4" />
+                  </svg>
+                </div>
+                <h3>Intervention &amp; Field Verification</h3>
+                <p>
+                  Lifecycle tracking with immutable audit trails and ground spot audits distinguishing self-reported from field-verified clearances.
+                </p>
+                <button
+                  type="button"
+                  className="card-action-button"
+                  onClick={() => setActiveTab('tracking')}
+                >
+                  Track Interventions &rarr;
+                </button>
+              </div>
             </div>
           </section>
         )}
@@ -515,6 +562,31 @@ export function App() {
             <EquipmentAllocation
               onNavigateToMap={() => {
                 setActiveTab('map');
+              }}
+            />
+          </section>
+        )}
+
+        {activeTab === 'tracking' && (
+          <section
+            id="panel-tracking"
+            role="tabpanel"
+            aria-labelledby="tab-tracking"
+            className="tab-panel"
+          >
+            <div className="section-header">
+              <h2>Intervention Tracking &amp; Field Verification</h2>
+              <p className="section-description">
+                Lifecycle management for crop residue interventions, audit trails, and on-site ground verification records.
+              </p>
+            </div>
+
+            <InterventionTracking
+              onNavigateToMap={() => {
+                setActiveTab('map');
+              }}
+              onNavigateToAllocation={() => {
+                setActiveTab('allocation');
               }}
             />
           </section>

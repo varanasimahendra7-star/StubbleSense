@@ -27,3 +27,12 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def init_db(engine_instance=None):
+    """Safely initialize database tables without dropping or deleting existing tables."""
+    target_engine = engine_instance or engine
+    import app.models.intervention  # noqa: F401
+
+    Base.metadata.create_all(bind=target_engine)
+

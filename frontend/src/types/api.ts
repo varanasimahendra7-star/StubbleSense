@@ -6,7 +6,7 @@ export interface HealthResponse {
 
 export type BackendStatus = 'loading' | 'connected' | 'unavailable';
 
-export type NavigationTab = 'overview' | 'map' | 'risk' | 'allocation';
+export type NavigationTab = 'overview' | 'map' | 'risk' | 'allocation' | 'tracking';
 
 export interface FireObservation {
   id: string;
@@ -105,4 +105,84 @@ export interface VillageAllocationResponse {
   data_notice: string;
   recommendations: EquipmentRecommendation[];
 }
+
+export type InterventionStatus = 'Proposed' | 'Approved' | 'In Progress' | 'Completed' | 'Cancelled';
+export type CompletionStatus = 'Pending' | 'Self-Reported' | 'Field-Verified';
+export type VerificationOutcome =
+  | 'Verified Cleared'
+  | 'Partial Residue Remaining'
+  | 'Violation Detected / Fire Evidence Found'
+  | 'Inaccessible / Flagged';
+
+export interface InterventionAuditItem {
+  id: number;
+  intervention_id: string;
+  from_status: string;
+  to_status: string;
+  changed_by: string;
+  reason?: string | null;
+  timestamp: string;
+}
+
+export interface FieldVerificationItem {
+  id: number;
+  intervention_id: string;
+  verifier_name: string;
+  verified_at: string;
+  outcome: VerificationOutcome | string;
+  verified_acres: number;
+  evidence_metadata: Record<string, unknown>;
+  verification_notes?: string | null;
+  is_synthetic: boolean;
+}
+
+export interface InterventionItem {
+  id: string;
+  village_id: string;
+  village_name: string;
+  district: string;
+  state: string;
+  equipment_id?: string | null;
+  equipment_name?: string | null;
+  intervention_type: string;
+  target_acres: number;
+  status: InterventionStatus;
+  completion_status: CompletionStatus;
+  created_at: string;
+  updated_at: string;
+  notes?: string | null;
+  is_synthetic: boolean;
+  audits: InterventionAuditItem[];
+  verification?: FieldVerificationItem | null;
+}
+
+export interface InterventionCreatePayload {
+  village_id: string;
+  equipment_id?: string | null;
+  intervention_type: string;
+  target_acres: number;
+  notes?: string | null;
+  requested_by: string;
+}
+
+export interface InterventionStatusUpdatePayload {
+  new_status: InterventionStatus;
+  changed_by: string;
+  reason?: string | null;
+}
+
+export interface FieldVerificationPayload {
+  verifier_name: string;
+  outcome: VerificationOutcome;
+  verified_acres: number;
+  evidence_metadata?: Record<string, unknown>;
+  verification_notes?: string | null;
+}
+
+export interface InterventionListResponse {
+  total: number;
+  data_notice: string;
+  items: InterventionItem[];
+}
+
 
