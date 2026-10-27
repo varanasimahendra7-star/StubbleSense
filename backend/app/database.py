@@ -3,17 +3,27 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.config import get_settings
 
+
 settings = get_settings()
 
-# SQLite requires check_same_thread=False for multi-threaded access in FastAPI
+database_url = settings.DATABASE_URL
+
+# Use the installed psycopg 3 driver for PostgreSQL
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+# SQLite requires check_same_thread=False for FastAPI
 connect_args = {}
-if settings.DATABASE_URL.startswith("sqlite"):
+if database_url.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    database_url,
     connect_args=connect_args,
 )
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
