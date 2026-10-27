@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.config import get_settings
 from app.core.security import create_access_token, hash_password
 from app.database import Base, get_db, init_db
 from app.main import app
@@ -1802,3 +1803,148 @@ def test_demo_accounts_misconfigured_without_passwords_handled_safely(test_sessi
         settings.EVAL_DEMO_FIELD_OFFICER_PASSWORD = orig_fpw
         settings.EVAL_DEMO_EQUIP_COORD_PASSWORD = orig_epw
         app.dependency_overrides.pop(get_db, None)
+
+
+def test_production_evaluation_accounts_bootstrap_and_login(test_session):
+    """Verify that in production mode (ENABLE_DEV_DEMO_ACCOUNTS=False), evaluation accounts
+
+    can be bootstrapped securely from EVAL_ACCOUNTS_PASSWORD, zero passwords are leaked
+    over the demo-accounts endpoint, and all 4 roles can authenticate successfully.
+    """
+    from app.services.user_service import ensure_production_evaluation_accounts
+    from app.models.intervention import InterventionModel
+
+    settings = get_settings()
+    orig_demo = settings.ENABLE_DEV_DEMO_ACCOUNTS
+    orig_eval_pw = settings.EVAL_ACCOUNTS_PASSWORD
+
+    try:
+        settings.ENABLE_DEV_DEMO_ACCOUNTS = False
+        settings.EVAL_ACCOUNTS_PASSWORD = "EvalInstructorSecret2026!"
+
+        # Ensure an intervention exists so field officer assignment works
+        existing_int = test_session.query(InterventionModel).first()
+        if not existing_int:
+            test_int = InterventionModel(
+                id="INT-2026-PB-001",
+                district="Ludhiana",
+                state="Punjab",
+                village_id="VIL-PB-001",
+                village_name="Samrala Kalan",
+                intervention_type="Happy Seeder",
+                target_acres=25.0,
+                status="Proposed",
+            )
+            test_session.add(test_int)
+            test_session.commit()
+
+        # 1. Bootstrap evaluation accounts
+        count = ensure_production_evaluation_accounts(test_session)
+        assert count >= 0
+
+        # Verify all 4 eval users exist in database
+        eval_roles = [
+            ("eval_superadmin", "super_admin", "EvalInstructorSecret2026!"),
+            ("eval_admin", "admin", "EvalInstructorSecret2026!"),
+            ("eval_field_officer", "field_officer", "EvalInstructorSecret2026!"),
+            ("eval_equipment_coord", "equipment_coordinator", "EvalInstructorSecret2026!"),
+        ]
+
+        for username, role, _ in eval_roles:
+            user = test_session.query(UserModel).filter(UserModel.username == username).first()
+            assert user is not None, f"User {username} was not created"
+            assert user.role == role
+            assert user.is_active is True
+            assert user.status == "active"
+
+        # 2. Verify field officer has an assigned intervention
+        fo_user = test_session.query(UserModel).filter(UserModel.username == "eval_field_officer").first()
+        assigned_int = test_session.query(InterventionModel).filter(
+            InterventionModel.assigned_officer_id == fo_user.id
+        ).first()
+        assert assigned_int is not None
+
+        # 3. Test GET /api/auth/demo-accounts endpoint in production mode
+        app.dependency_overrides[get_db] = lambda: test_session
+        client = TestClient(app)
+
+        res = client.get("/api/auth/demo-accounts")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["enabled"] is True
+        assert data["mode"] == "evaluation"
+        assert len(data["accounts"]) == 4
+
+        # CRITICAL SECURITY CHECK: passwords MUST NEVER be sent over the wire in production evaluation mode
+        for acct in data["accounts"]:
+            assert acct["password"] == "", f"Password leaked in demo endpoint for {acct['username']}!"
+            assert acct["username"].startswith("eval_")
+
+        # 4. Test login for each role with the derived credentials
+        for username, expected_role, valid_password in eval_roles:
+            # Bad password fails
+            bad_login = client.post(
+                "/api/auth/login",
+                json={"username": username, "password": "WrongPassword!"},
+            )
+            assert bad_login.status_code == 401
+
+            # Valid password succeeds
+            login_res = client.post(
+                "/api/auth/login",
+                json={"username": username, "password": valid_password},
+            )
+            assert login_res.status_code == 200
+            user_data = login_res.json()["user"]
+            assert user_data["username"] == username
+            assert user_data["role"] == expected_role
+            assert user_data["is_active"] is True
+
+            # Verify session cookie / auth works
+            me_res = client.get("/api/auth/me")
+            assert me_res.status_code == 200
+            assert me_res.json()["username"] == username
+            assert me_res.json()["role"] == expected_role
+
+            client.post("/api/auth/logout")
+
+        # 5. Idempotent re-run does not create duplicate accounts
+        re_count = ensure_production_evaluation_accounts(test_session)
+        assert re_count == 4  # Updates password hashes idempotently for existing 4 accounts
+
+    finally:
+        settings.ENABLE_DEV_DEMO_ACCOUNTS = orig_demo
+        settings.EVAL_ACCOUNTS_PASSWORD = orig_eval_pw
+        app.dependency_overrides.pop(get_db, None)
+
+
+def test_demo_accounts_disabled_when_eval_accounts_not_in_database(test_session):
+    """Verify that when evaluation accounts do not exist in the database,
+
+    GET /api/auth/demo-accounts strictly returns enabled=False and does NOT
+    falsely display Evaluation Ready or fall back to dev demo users.
+    """
+    settings = get_settings()
+    orig_demo = settings.ENABLE_DEV_DEMO_ACCOUNTS
+
+    try:
+        settings.ENABLE_DEV_DEMO_ACCOUNTS = False
+
+        # Ensure no eval_* accounts exist in this session
+        test_session.query(UserModel).filter(UserModel.username.startswith("eval_")).delete()
+        test_session.commit()
+
+        app.dependency_overrides[get_db] = lambda: test_session
+        client = TestClient(app)
+
+        res = client.get("/api/auth/demo-accounts")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["enabled"] is False
+        assert data["mode"] == "disabled"
+        assert len(data["accounts"]) == 0
+    finally:
+        settings.ENABLE_DEV_DEMO_ACCOUNTS = orig_demo
+        app.dependency_overrides.pop(get_db, None)
+
+

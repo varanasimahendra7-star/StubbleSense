@@ -204,39 +204,84 @@ def list_staff(
 
 
 @router.get("/demo-accounts", response_model=DemoAccountsResponse)
-def get_demo_accounts():
-    """Retrieve evaluation demo accounts and guidance if ENABLE_DEV_DEMO_ACCOUNTS is enabled."""
+def get_demo_accounts(db: Session = Depends(get_db)):
+    """Retrieve available evaluation accounts metadata for evaluation testing."""
     current_settings = get_settings()
-    if not current_settings.ENABLE_DEV_DEMO_ACCOUNTS:
-        return DemoAccountsResponse(
-            enabled=False,
-            notice="Evaluation demo accounts are disabled in backend configuration (ENABLE_DEV_DEMO_ACCOUNTS=false). Staff must use provisioned credentials.",
-            accounts=[],
-        )
 
-    try:
-        creds = get_eval_demo_credentials()
-    except ValueError as err:
-        return DemoAccountsResponse(
-            enabled=False,
-            notice=f"Evaluation demo accounts enabled but misconfigured: {str(err)}",
-            accounts=[],
-        )
+    # 1. Local Development Demo Accounts Mode (only when ENABLE_DEV_DEMO_ACCOUNTS=true in dev)
+    if current_settings.ENABLE_DEV_DEMO_ACCOUNTS:
+        try:
+            creds = get_eval_demo_credentials()
+            items = [
+                DemoAccountItem(
+                    role=c["role"],
+                    label=c["label"],
+                    username=c["username"],
+                    password=c.get("password", ""),
+                    description=c["description"],
+                )
+                for c in creds
+            ]
+            return DemoAccountsResponse(
+                enabled=True,
+                mode="development_demo",
+                notice="Development demo mode active. Credentials can be populated automatically.",
+                accounts=items,
+            )
+        except ValueError as err:
+            return DemoAccountsResponse(
+                enabled=False,
+                mode="disabled",
+                notice=f"Evaluation demo accounts enabled but misconfigured: {str(err)}",
+                accounts=[],
+            )
 
-    items = [
-        DemoAccountItem(
-            role=c["role"],
-            label=c["label"],
-            username=c["username"],
-            password=c["password"],
-            description=c["description"],
-        )
-        for c in creds
+    # 2. Production Evaluation Mode
+    # Strictly check for the dedicated provisioned evaluation accounts in the database
+    eval_roles_metadata = [
+        ("super_admin", "Super Admin", "eval_superadmin", "Full system oversight, user and role administration, cross-district view."),
+        ("admin", "District Admin", "eval_admin", "District governance, intervention creation, equipment allocation, and staff management."),
+        ("field_officer", "Field Officer", "eval_field_officer", "Dedicated Field Operations dashboard, spot inspection, and on-site clearance verification."),
+        ("equipment_coordinator", "Equipment Coordinator", "eval_equipment_coord", "Dedicated Equipment Operations dashboard, machinery allocation, and dispatch mobilization."),
     ]
+
+    active_eval_accounts = []
+    for role, label, username, description in eval_roles_metadata:
+        user = (
+            db.query(UserModel)
+            .filter(
+                UserModel.role == role,
+                UserModel.username == username,
+                UserModel.is_active == True,
+                UserModel.status == "active",
+            )
+            .first()
+        )
+        if user:
+            active_eval_accounts.append(
+                DemoAccountItem(
+                    role=role,
+                    label=label,
+                    username=user.username,
+                    password="",  # Strictly omitted/empty in production - passwords are never exposed
+                    description=description,
+                )
+            )
+
+    # STRICT CHECK: All 4 dedicated eval_* accounts MUST actually exist in the database
+    if len(active_eval_accounts) == 4:
+        return DemoAccountsResponse(
+            enabled=True,
+            mode="evaluation",
+            notice="Evaluation accounts are active for all four operational roles. Click a role to pre-fill the username, then enter your assigned evaluation password.",
+            accounts=active_eval_accounts,
+        )
+
     return DemoAccountsResponse(
-        enabled=True,
-        notice="Evaluation environment active. Click any role below to pre-fill credentials, then click Sign In.",
-        accounts=items,
+        enabled=False,
+        mode="disabled",
+        notice="Evaluation accounts are not active on this deployment. Staff and evaluators must use provisioned credentials.",
+        accounts=[],
     )
 
 

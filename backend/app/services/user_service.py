@@ -171,3 +171,72 @@ def seed_dev_demo_users(db: Session) -> int:
     if added > 0:
         db.commit()
     return added
+
+
+def ensure_production_evaluation_accounts(db: Session) -> int:
+    """Idempotently bootstrap evaluation accounts for all 4 roles in production when configured via environment.
+
+    Compatible with PostgreSQL and SQLite. Ensures unique, securely hashed credentials per role.
+    Updates existing eval_* accounts' password hashes to match configured environment password.
+    Ensures assigned intervention for field officer.
+    """
+    current_settings = get_settings()
+
+    eval_shared_pw = current_settings.EVAL_ACCOUNTS_PASSWORD
+    sp_pw = current_settings.EVAL_SUPERADMIN_PASSWORD or eval_shared_pw
+    adm_pw = current_settings.EVAL_ADMIN_PASSWORD or eval_shared_pw
+    fo_pw = current_settings.EVAL_FIELD_OFFICER_PASSWORD or eval_shared_pw
+    ec_pw = current_settings.EVAL_EQUIP_COORD_PASSWORD or eval_shared_pw
+
+    role_specs = [
+        ("super_admin", "eval_superadmin", "System Super Admin (Evaluation)", sp_pw),
+        ("admin", "eval_admin", "District Administrator (Evaluation)", adm_pw),
+        ("field_officer", "eval_field_officer", "Nodal Field Officer (Evaluation)", fo_pw),
+        ("equipment_coordinator", "eval_equipment_coord", "CHC Equipment Dispatcher (Evaluation)", ec_pw),
+    ]
+
+    added_or_updated = 0
+    for role, username, full_name, password in role_specs:
+        if not password:
+            continue
+
+        existing = db.query(UserModel).filter(UserModel.username == username).first()
+        if not existing:
+            new_user = UserModel(
+                id=f"USER-{role.upper()[:5]}-EVAL",
+                username=username,
+                full_name=full_name,
+                hashed_password=hash_password(password),
+                role=role,
+                is_active=True,
+                status="active",
+                is_synthetic=False,
+            )
+            db.add(new_user)
+            added_or_updated += 1
+        else:
+            # Update password hash if password has been provided in environment
+            existing.hashed_password = hash_password(password)
+            existing.is_active = True
+            existing.status = "active"
+            existing.full_name = full_name
+            db.add(existing)
+            added_or_updated += 1
+
+    if added_or_updated > 0:
+        db.commit()
+
+    # Ensure eval_field_officer has an assigned intervention in the database for verification testing
+    fo_user = db.query(UserModel).filter(UserModel.username == "eval_field_officer").first()
+    if fo_user:
+        assigned = db.query(InterventionModel).filter(InterventionModel.assigned_officer_id == fo_user.id).first()
+        if not assigned:
+            target_int = db.query(InterventionModel).filter(InterventionModel.id == "INT-2026-PB-001").first()
+            if not target_int:
+                target_int = db.query(InterventionModel).first()
+            if target_int:
+                target_int.assigned_officer_id = fo_user.id
+                db.add(target_int)
+                db.commit()
+
+    return added_or_updated

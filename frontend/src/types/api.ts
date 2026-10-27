@@ -228,12 +228,13 @@ export interface DemoAccountItem {
   role: UserRole;
   label: string;
   username: string;
-  password: string;
+  password?: string;
   description: string;
 }
 
 export interface DemoAccountsResponse {
   enabled: boolean;
+  mode?: 'evaluation' | 'development_demo' | 'disabled' | string;
   notice: string;
   accounts: DemoAccountItem[];
 }

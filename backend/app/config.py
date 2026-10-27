@@ -3,8 +3,16 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
+from dotenv import load_dotenv
+
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_DB_PATH = BACKEND_DIR / "stubble_sense.db"
+
+# Load .env from the backend directory (if present). OS env vars always take precedence.
+_dotenv_path = BACKEND_DIR / ".env"
+if _dotenv_path.exists():
+    load_dotenv(dotenv_path=_dotenv_path, override=False)
+
 
 # Known insecure or default placeholder values that must be rejected in all environments
 INSECURE_JWT_SECRETS = {
@@ -58,7 +66,14 @@ class Settings:
                 "CRITICAL SECURITY ERROR: AUTO_APPROVE_PUBLIC_REGISTRATION cannot be enabled in a production environment."
             )
 
-        # Demo passwords: never hardcoded, populated exclusively via environment variables
+        # Production evaluation accounts passwords (configured strictly via environment variables)
+        self.EVAL_ACCOUNTS_PASSWORD: str = os.getenv("EVAL_ACCOUNTS_PASSWORD", os.getenv("EVALUATION_PASSWORD", "")).strip()
+        self.EVAL_SUPERADMIN_PASSWORD: str = os.getenv("EVAL_SUPERADMIN_PASSWORD", "").strip()
+        self.EVAL_ADMIN_PASSWORD: str = os.getenv("EVAL_ADMIN_PASSWORD", "").strip()
+        self.EVAL_FIELD_OFFICER_PASSWORD: str = os.getenv("EVAL_FIELD_OFFICER_PASSWORD", "").strip()
+        self.EVAL_EQUIP_COORD_PASSWORD: str = os.getenv("EVAL_EQUIP_COORD_PASSWORD", "").strip()
+
+        # Local development demo passwords (used only when ENABLE_DEV_DEMO_ACCOUNTS=true)
         self.EVAL_DEMO_PASSWORD: str = os.getenv("EVAL_DEMO_PASSWORD", "")
         self.EVAL_DEMO_SUPERADMIN_PASSWORD: str = os.getenv("EVAL_DEMO_SUPERADMIN_PASSWORD", "")
         self.EVAL_DEMO_ADMIN_PASSWORD: str = os.getenv("EVAL_DEMO_ADMIN_PASSWORD", "")

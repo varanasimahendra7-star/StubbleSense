@@ -86,12 +86,12 @@ class AuthResponse(BaseModel):
 
 
 class DemoAccountItem(BaseModel):
-    """Evaluation demo account metadata and credentials for local evaluation."""
+    """Evaluation demo account metadata and credentials for evaluation."""
 
     role: str
     label: str
     username: str
-    password: str
+    password: str = ""
     description: str
 
 
@@ -99,5 +99,6 @@ class DemoAccountsResponse(BaseModel):
     """Response containing status and available evaluation demo accounts."""
 
     enabled: bool
+    mode: str = "evaluation"
     notice: str
     accounts: list[DemoAccountItem] = []

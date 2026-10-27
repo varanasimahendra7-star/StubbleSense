@@ -141,6 +141,29 @@
   gap: 0.35rem;
 }
 
+.login-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.login-toggle-pw-btn {
+  background: none;
+  border: none;
+  color: var(--primary-emerald);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  line-height: 1;
+}
+
+.login-toggle-pw-btn:hover {
+  text-decoration: underline;
+  color: var(--primary-emerald-hover);
+}
+
 .login-label {
   font-size: 0.8rem;
   font-weight: 600;
@@ -252,6 +275,12 @@
   color: #fca5a5;
 }
 
+.demo-status-pill.neutral {
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #cbd5e1;
+}
+
 .demo-status-pill.enabled {
   background: rgba(16, 185, 129, 0.12);
   border: 1px solid rgba(16, 185, 129, 0.3);
@@ -266,6 +295,21 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+}
+
+.evaluation-notice-box.neutral {
+  background: rgba(148, 163, 184, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+}
+
+.evaluation-notice-box.neutral strong {
+  color: #cbd5e1;
+}
+
+.evaluation-notice-box.neutral p {
+  margin: 0;
+  color: var(--text-dim);
 }
 
 .evaluation-notice-box.disabled {
@@ -323,20 +367,16 @@
   background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
-  padding: 0.5rem 0.4rem;
+  padding: 0.55rem 0.45rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 0.15rem;
+  gap: 0.2rem;
   cursor: pointer;
   transition: all 0.15s ease;
-}
-
-.demo-role-btn.disabled {
-  opacity: 0.55;
-  border-style: dashed;
-  cursor: pointer;
+  position: relative;
+  user-select: none;
 }
 
 .demo-role-btn:hover {
@@ -344,9 +384,41 @@
   background-color: rgba(16, 185, 129, 0.08);
 }
 
+.demo-role-btn:focus-visible {
+  outline: none;
+  border-color: var(--primary-emerald);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4);
+}
+
+.demo-role-btn.selected {
+  border-color: var(--primary-emerald);
+  background-color: rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
+}
+
+.demo-role-btn-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  width: 100%;
+}
+
 .demo-role-btn strong {
   font-size: 0.75rem;
   color: var(--text-main);
+  transition: color 0.15s ease;
+}
+
+.demo-role-btn.selected strong {
+  color: var(--primary-emerald);
+}
+
+.demo-role-check {
+  color: var(--primary-emerald);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .demo-role-btn span {

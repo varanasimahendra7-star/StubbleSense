@@ -1,6 +1,11 @@
 import { useEffect, useId, useState } from 'react';
 import { getDemoAccounts, loginUser } from '../api/auth';
 import type { DemoAccountItem, UserProfile, UserRole } from '../types/api';
+import {
+  ROLE_CARD_CONFIG,
+  handleRoleSwitch,
+  resolveRoleFromUsername,
+} from '../utils/roleSwitch';
 import './LoginPage.css';
 
 interface LoginPageProps {
@@ -17,7 +22,18 @@ export function LoginPage({
   onNavigateToRegister,
 }: LoginPageProps) {
   const [username, setUsername] = useState<string>(initialUsername);
-  const [password, setPassword] = useState<string>('');
+  const [password, setPassword] = useState<string>(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('eval_key') || params.get('eval_password') || '';
+      }
+    } catch {
+      // Ignore
+    }
+    return '';
+  });
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [demoAccountsEnabled, setDemoAccountsEnabled] = useState<boolean>(false);
@@ -26,6 +42,9 @@ export function LoginPage({
 
   const usernameId = useId();
   const passwordId = useId();
+
+  // Derived role synchronized with username and demo accounts
+  const selectedRole = resolveRoleFromUsername(username, demoAccounts);
 
   // Inspect environment capability and retrieve evaluation accounts on mount
   useEffect(() => {
@@ -54,6 +73,24 @@ export function LoginPage({
     };
   }, []);
 
+  // Clean evaluation key/password from URL search params if present
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location.search) {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('eval_key') || params.has('eval_password')) {
+          params.delete('eval_key');
+          params.delete('eval_password');
+          const cleanQuery = params.toString();
+          const cleanUrl = window.location.pathname + (cleanQuery ? `?${cleanQuery}` : '') + window.location.hash;
+          window.history.replaceState({}, '', cleanUrl);
+        }
+      }
+    } catch {
+      // Ignore URL parsing errors
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -73,23 +110,14 @@ export function LoginPage({
   };
 
   const handleSelectDemoRole = (role: UserRole) => {
-    if (!demoAccountsEnabled) {
-      setDemoNotice(
-        'Evaluation demo accounts are disabled in configuration (ENABLE_DEV_DEMO_ACCOUNTS=false). ' +
-        'Please sign in with credentials created via CLI bootstrap ("python backend/app/cli/create_user.py").'
-      );
-      return;
-    }
+    const nextState = handleRoleSwitch(role, { demoAccounts });
+    setUsername(nextState.username);
+    setPassword(nextState.password); // Clears password so previous role's password is not accidentally submitted
+    setErrorMessage(nextState.errorMessage);
+    setDemoNotice(nextState.demoNotice);
 
-    const matched = demoAccounts.find((a) => a.role === role);
-    if (matched) {
-      setUsername(matched.username);
-      setPassword(matched.password);
-      setDemoNotice(`Populated ${matched.label} credentials (${matched.username}). Click "Sign In to Dashboard" to authenticate.`);
-      setErrorMessage(null);
-    } else {
-      setErrorMessage(`Credentials for ${role} could not be located in this evaluation environment.`);
-    }
+    const passEl = document.getElementById(passwordId);
+    if (passEl) passEl.focus();
   };
 
   return (
@@ -168,12 +196,22 @@ export function LoginPage({
           </div>
 
           <div className="login-field">
-            <label htmlFor={passwordId} className="login-label">
-              Password:
-            </label>
+            <div className="login-label-row">
+              <label htmlFor={passwordId} className="login-label">
+                Password:
+              </label>
+              <button
+                type="button"
+                className="login-toggle-pw-btn"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
             <input
               id={passwordId}
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               className="login-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -205,75 +243,58 @@ export function LoginPage({
           )}
         </form>
 
-        {/* Quick Demo Role Picker for Local Evaluation */}
+        {/* Quick Demo Role Picker for Evaluation */}
         <div className="demo-credentials-box">
           <div className="demo-box-header">
-            <span className="demo-box-label">Evaluation Demo Accounts:</span>
+            <span className="demo-box-label">Evaluation Roles & Workflows:</span>
             {!demoAccountsEnabled ? (
-              <span className="demo-status-pill disabled">Disabled</span>
+              <span className="demo-status-pill neutral">Standard Access</span>
             ) : (
-              <span className="demo-status-pill enabled">Evaluation Mode Active</span>
+              <span className="demo-status-pill enabled">Evaluation Ready</span>
             )}
           </div>
 
           {!demoAccountsEnabled ? (
-            <div className="evaluation-notice-box disabled" role="note">
-              <strong>Evaluation Accounts Disabled</strong>
+            <div className="evaluation-notice-box neutral" role="note">
+              <strong>Standard Access Mode</strong>
               <p>
-                Synthetic demo accounts are disabled in configuration (<code>ENABLE_DEV_DEMO_ACCOUNTS=false</code>).
-                To evaluate with demo accounts, start the backend with <code>ENABLE_DEV_DEMO_ACCOUNTS=true</code>.
+                Staff and evaluators must sign in with their provisioned credentials.
               </p>
             </div>
           ) : (
             <div className="evaluation-notice-box active" role="note">
               <strong>Evaluation Mode Active</strong>
               <p>
-                Click any role below to populate credentials into the sign-in form, then click <strong>Sign In to Dashboard</strong>.
+                {demoNotice || 'Click any role below to populate its username in the sign-in form. Enter your evaluation password and click Sign In to Dashboard.'}
               </p>
             </div>
           )}
 
-          <div className="demo-buttons-grid">
-            <button
-              type="button"
-              className={`demo-role-btn ${!demoAccountsEnabled ? 'disabled' : ''}`}
-              disabled={!demoAccountsEnabled}
-              onClick={() => handleSelectDemoRole('super_admin')}
-              title={demoAccountsEnabled ? 'Developer Super Admin' : 'Demo accounts disabled in backend configuration'}
-            >
-              <strong>Super Admin</strong>
-              <span>Developer system</span>
-            </button>
-            <button
-              type="button"
-              className={`demo-role-btn ${!demoAccountsEnabled ? 'disabled' : ''}`}
-              disabled={!demoAccountsEnabled}
-              onClick={() => handleSelectDemoRole('admin')}
-              title={demoAccountsEnabled ? 'District Admin' : 'Demo accounts disabled in backend configuration'}
-            >
-              <strong>District Admin</strong>
-              <span>District operations (RBAC)</span>
-            </button>
-            <button
-              type="button"
-              className={`demo-role-btn ${!demoAccountsEnabled ? 'disabled' : ''}`}
-              disabled={!demoAccountsEnabled}
-              onClick={() => handleSelectDemoRole('field_officer')}
-              title={demoAccountsEnabled ? 'Field Officer' : 'Demo accounts disabled in backend configuration'}
-            >
-              <strong>Field Officer</strong>
-              <span>Verifications &amp; audit</span>
-            </button>
-            <button
-              type="button"
-              className={`demo-role-btn ${!demoAccountsEnabled ? 'disabled' : ''}`}
-              disabled={!demoAccountsEnabled}
-              onClick={() => handleSelectDemoRole('equipment_coordinator')}
-              title={demoAccountsEnabled ? 'Equipment Coordinator' : 'Demo accounts disabled in backend configuration'}
-            >
-              <strong>Equipment Coord</strong>
-              <span>Machinery dispatch</span>
-            </button>
+          <div className="demo-buttons-grid" role="group" aria-label="Evaluation Roles and Workflows">
+            {ROLE_CARD_CONFIG.map((config) => {
+              const isSelected = selectedRole === config.role;
+              return (
+                <button
+                  key={config.role}
+                  type="button"
+                  className={`demo-role-btn ${isSelected ? 'selected' : ''}`}
+                  onClick={() => handleSelectDemoRole(config.role)}
+                  aria-pressed={isSelected}
+                  aria-label={`Select ${config.title} evaluation role`}
+                  title={`Select ${config.title} evaluation role (${config.defaultUsername})`}
+                >
+                  <span className="demo-role-btn-header">
+                    <strong>{config.title}</strong>
+                    {isSelected && (
+                      <span className="demo-role-check" aria-hidden="true">
+                        ✓
+                      </span>
+                    )}
+                  </span>
+                  <span>{config.subtitle}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

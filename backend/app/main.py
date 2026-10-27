@@ -11,7 +11,12 @@ from app.api.villages import router as villages_router
 from app.config import get_settings
 from app.core.dependencies import verify_csrf
 from app.database import SessionLocal, init_db
-from app.services.user_service import ensure_initial_admin, ensure_initial_super_admin, seed_dev_demo_users
+from app.services.user_service import (
+    ensure_initial_admin,
+    ensure_initial_super_admin,
+    ensure_production_evaluation_accounts,
+    seed_dev_demo_users,
+)
 
 settings = get_settings()
 
@@ -20,11 +25,12 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     # Safe backward-compatible schema initialization
     init_db()
-    # Safe idempotent initial super admin, admin & optional dev demo accounts
+    # Safe idempotent initial super admin, admin, evaluation accounts & optional dev demo accounts
     db = SessionLocal()
     try:
         ensure_initial_super_admin(db)
         ensure_initial_admin(db)
+        ensure_production_evaluation_accounts(db)
         seed_dev_demo_users(db)
     finally:
         db.close()
