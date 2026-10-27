@@ -21,6 +21,7 @@ class InterventionModel(Base):
     target_acres = Column(Float, nullable=False)
     status = Column(String(50), nullable=False, default="Proposed", index=True)
     completion_status = Column(String(50), nullable=False, default="Pending", index=True)
+    assigned_officer_id = Column(String(50), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     notes = Column(Text, nullable=True)

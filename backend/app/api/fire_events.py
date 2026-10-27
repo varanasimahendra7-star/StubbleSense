@@ -1,7 +1,9 @@
 from typing import Optional
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
+from app.core.dependencies import get_current_user
 from app.data.synthetic_fires import get_synthetic_fire_events
+from app.models.user import UserModel
 from app.schemas.fire_event import FireEventsResponse
 
 router = APIRouter(tags=["Fire Events"])
@@ -12,6 +14,7 @@ def get_fire_events(
     district: Optional[str] = Query(None, description="Filter by district name (case-insensitive)"),
     state: Optional[str] = Query(None, description="Filter by state (Punjab, Haryana)"),
     date: Optional[str] = Query(None, description="Filter by date string prefix (e.g. YYYY-MM-DD)"),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Retrieve deterministic synthetic fire observation events for demonstration.
 

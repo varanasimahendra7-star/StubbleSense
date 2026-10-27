@@ -33,6 +33,25 @@ def init_db(engine_instance=None):
     """Safely initialize database tables without dropping or deleting existing tables."""
     target_engine = engine_instance or engine
     import app.models.intervention  # noqa: F401
+    import app.models.user  # noqa: F401
 
     Base.metadata.create_all(bind=target_engine)
 
+    # Safe backward-compatible SQLite migration for existing databases
+    from sqlalchemy import inspect, text
+    inspector = inspect(target_engine)
+    if "interventions" in inspector.get_table_names():
+        columns = [c["name"] for c in inspector.get_columns("interventions")]
+        if "assigned_officer_id" not in columns:
+            with target_engine.begin() as conn:
+                conn.execute(text("ALTER TABLE interventions ADD COLUMN assigned_officer_id VARCHAR(50);"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_interventions_assigned_officer_id ON interventions (assigned_officer_id);"))
+
+    if "users" in inspector.get_table_names():
+        user_columns = [c["name"] for c in inspector.get_columns("users")]
+        if "status" not in user_columns:
+            with target_engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN status VARCHAR(50) DEFAULT 'active';"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_users_status ON users (status);"))
+                conn.execute(text("UPDATE users SET status = 'active' WHERE is_active = 1 AND (status IS NULL OR status = '');"))
+                conn.execute(text("UPDATE users SET status = 'pending' WHERE is_active = 0 AND (status IS NULL OR status = '');"))

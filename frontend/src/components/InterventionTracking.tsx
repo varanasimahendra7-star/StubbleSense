@@ -13,20 +13,31 @@ import type {
   InterventionCreatePayload,
   InterventionItem,
   InterventionStatus,
+  UserProfile,
   VerificationOutcome,
   VillageRiskItem,
 } from '../types/api';
+import { getPermissions } from '../permissions';
 import './InterventionTracking.css';
 
 interface InterventionTrackingProps {
   onNavigateToMap?: () => void;
   onNavigateToAllocation?: () => void;
+  currentUser?: UserProfile | null;
+  mode?: 'standard' | 'field_officer' | 'equipment_coordinator';
 }
 
 export function InterventionTracking({
   onNavigateToMap,
   onNavigateToAllocation,
+  currentUser,
+  mode = 'standard',
 }: InterventionTrackingProps) {
+  const role = currentUser?.role || 'admin';
+  const permissions = getPermissions(role);
+  const isFieldOfficerMode = mode === 'field_officer' || role === 'field_officer';
+  const isEquipCoordMode = mode === 'equipment_coordinator' || role === 'equipment_coordinator';
+
   // Main data states
   const [interventions, setInterventions] = useState<InterventionItem[]>([]);
   const [dataNotice, setDataNotice] = useState<string>('');
@@ -62,12 +73,16 @@ export function InterventionTracking({
   const [isSubmittingCreate, setIsSubmittingCreate] = useState<boolean>(false);
 
   // Status Update Form State
-  const [statusActor, setStatusActor] = useState<string>('Nodal Field Coordinator');
+  const [statusActor, setStatusActor] = useState<string>(
+    currentUser ? `${currentUser.full_name} (${currentUser.role})` : 'Nodal Field Coordinator'
+  );
   const [statusReason, setStatusReason] = useState<string>('');
   const [isSubmittingStatus, setIsSubmittingStatus] = useState<boolean>(false);
 
   // Verification Form State
-  const [verifierName, setVerifierName] = useState<string>('Nodal Field Officer S. Sandhu');
+  const [verifierName, setVerifierName] = useState<string>(
+    currentUser ? currentUser.full_name : 'Nodal Field Officer S. Sandhu'
+  );
   const [verifyOutcome, setVerifyOutcome] = useState<VerificationOutcome>('Verified Cleared');
   const [verifyAcres, setVerifyAcres] = useState<number>(30);
   const [verifyNotes, setVerifyNotes] = useState<string>('');
@@ -323,9 +338,13 @@ export function InterventionTracking({
       {/* KPI Metrics Summary Row */}
       <div className="kpi-summary-grid">
         <div className="kpi-metric-card">
-          <span className="kpi-label">Total Interventions</span>
+          <span className="kpi-label">
+            {isFieldOfficerMode ? 'Assigned Interventions' : 'Total Interventions'}
+          </span>
           <span className="kpi-value">{totalCount}</span>
-          <span className="kpi-sub">Across Punjab &amp; Haryana demo clusters</span>
+          <span className="kpi-sub">
+            {isFieldOfficerMode ? 'Cases assigned to your field jurisdiction' : 'Across Punjab & Haryana demo clusters'}
+          </span>
         </div>
         <div className="kpi-metric-card in-progress">
           <span className="kpi-label">Active / In Progress</span>
@@ -409,20 +428,22 @@ export function InterventionTracking({
           </div>
         </div>
 
-        <div className="action-buttons-group">
-          <button
-            type="button"
-            className="btn-create-intervention"
-            onClick={() => setIsCreateOpen(true)}
-            aria-label="Create new intervention requisition"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            <span>New Intervention</span>
-          </button>
-        </div>
+        {permissions.canCreateIntervention && (
+          <div className="action-buttons-group">
+            <button
+              type="button"
+              className="btn-create-intervention"
+              onClick={() => setIsCreateOpen(true)}
+              aria-label="Create new intervention requisition"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>New Intervention</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main Content: List & Details Drawer */}
@@ -627,11 +648,11 @@ export function InterventionTracking({
               </div>
             </div>
 
-            {/* Action Bar based on current status */}
+            {/* Action Bar based on current status and role permissions */}
             <div className="drawer-actions-bar">
               <span className="actions-bar-label">Available Lifecycle Actions:</span>
               <div className="actions-button-row">
-                {activeIntervention.status === 'Proposed' && (
+                {activeIntervention.status === 'Proposed' && permissions.canTransitionToApproved && (
                   <button
                     type="button"
                     className="action-btn primary"
@@ -641,17 +662,17 @@ export function InterventionTracking({
                   </button>
                 )}
 
-                {activeIntervention.status === 'Approved' && (
+                {activeIntervention.status === 'Approved' && permissions.canTransitionToInProgress && (
                   <button
                     type="button"
                     className="action-btn inprogress"
                     onClick={() => handleOpenStatusAction('In Progress')}
                   >
-                    Start In-Progress Mobilization &rarr;
+                    {isEquipCoordMode ? 'Mobilize & Dispatch Machinery \u2192' : 'Start In-Progress Mobilization \u2192'}
                   </button>
                 )}
 
-                {activeIntervention.status === 'In Progress' && (
+                {activeIntervention.status === 'In Progress' && permissions.canTransitionToCompleted && (
                   <button
                     type="button"
                     className="action-btn completed"
@@ -661,19 +682,21 @@ export function InterventionTracking({
                   </button>
                 )}
 
-                <button
-                  type="button"
-                  className="action-btn verify"
-                  onClick={handleOpenVerify}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                    <polyline points="22 4 12 14.01 9 11.01" />
-                  </svg>
-                  <span>
-                    {activeIntervention.verification ? 'Update Field Verification' : 'Conduct Ground Field Verification'}
-                  </span>
-                </button>
+                {permissions.canVerifyField && (
+                  <button
+                    type="button"
+                    className="action-btn verify"
+                    onClick={handleOpenVerify}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span>
+                      {activeIntervention.verification ? 'Update Field Verification' : 'Conduct Ground Field Verification'}
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
 

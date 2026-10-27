@@ -181,6 +181,106 @@
   50% { opacity: 1; }
 }
 
+/* User Profile Meta & Auth Controls */
+.auth-loading-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  background-color: var(--bg-base);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.auth-loading-screen .spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--primary-emerald);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.user-profile-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.user-role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.user-role-badge.role-super_admin {
+  background: rgba(168, 85, 247, 0.16);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+}
+
+.user-role-badge.role-admin {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.user-role-badge.role-field_officer {
+  background: rgba(6, 182, 212, 0.16);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  color: #38bdf8;
+}
+
+.user-role-badge.role-equipment_coordinator {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+}
+
+.btn-signout {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  margin-left: 0.2rem;
+}
+
+.btn-signout:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.btn-signout:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
 /* Navigation Bar */
 .app-nav {
   margin-top: 1rem;
@@ -440,6 +540,44 @@
   margin-bottom: 1.25rem;
 }
 
+.section-header-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.overview-scope-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.overview-scope-badge.super-admin {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+}
+
+.overview-scope-badge.district-admin {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.overview-scope-badge.operational {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+}
+
 .section-header h2 {
   margin: 0;
   font-size: 1.35rem;
@@ -590,6 +728,12 @@
   background-color: var(--accent-cyan-bg);
   border: 1px solid var(--accent-cyan-border);
   color: #22d3ee;
+}
+
+.feature-icon-wrapper.user-accent {
+  background-color: rgba(168, 85, 247, 0.14);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
 }
 
 .feature-card h3 {
@@ -897,4 +1041,80 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Access Denied / Role Restriction Panel */
+.access-denied-panel {
+  background-color: var(--bg-card);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.access-denied-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.access-denied-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.access-denied-panel h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: var(--text-main);
+}
+
+.access-denied-panel p {
+  margin: 0;
+  max-width: 520px;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.btn-return-permitted {
+  margin-top: 0.5rem;
+  background: linear-gradient(135deg, var(--primary-emerald) 0%, #059669 100%);
+  color: #042f2e;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-return-permitted:hover {
+  opacity: 0.9;
+}
+
+.read-only-badge {
+  font-size: 0.725rem;
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-left: 0.75rem;
+  vertical-align: middle;
 }

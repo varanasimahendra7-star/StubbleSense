@@ -49,6 +49,7 @@ class InterventionItem(BaseModel):
     target_acres: float
     status: str
     completion_status: str
+    assigned_officer_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     notes: Optional[str] = None
@@ -65,6 +66,7 @@ class InterventionCreate(BaseModel):
     equipment_id: Optional[str] = Field(None, description="Optional machinery identifier from CHC registry")
     intervention_type: str = Field(..., description="e.g. In-situ Happy Seeding, Ex-situ Baler Collection")
     target_acres: float = Field(..., gt=0.0, le=5000.0, description="Planned acreage to treat")
+    assigned_officer_id: Optional[str] = Field(None, description="Optional designated nodal officer ID")
     notes: Optional[str] = Field(None, description="Administrative or operational notes")
     requested_by: str = Field(..., min_length=2, description="Coordinator or farmer requesting intervention")
 

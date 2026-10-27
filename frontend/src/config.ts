@@ -1,7 +1,10 @@
 /**
  * Application runtime configuration.
- * VITE_API_BASE_URL is loaded from environment variables with a localhost fallback.
+ * Dynamically resolves API_BASE_URL to match current hostname (localhost vs 127.0.0.1)
+ * to ensure session cookies are sent as same-site requests.
  */
 export const API_BASE_URL: string =
   (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') ||
-  'http://127.0.0.1:8000';
+  (typeof window !== 'undefined'
+    ? `${window.location.protocol}//${window.location.hostname}:8000`
+    : 'http://localhost:8000');

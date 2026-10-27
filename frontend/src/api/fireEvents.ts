@@ -1,3 +1,4 @@
+import { notifyAuthExpired } from './auth';
 import { API_BASE_URL } from '../config';
 import type { FireEventsResponse } from '../types/api';
 
@@ -26,9 +27,13 @@ export async function getFireEvents(params?: {
     headers: {
       Accept: 'application/json',
     },
+    credentials: 'include',
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      notifyAuthExpired();
+    }
     throw new Error(`Failed to fetch fire events (HTTP ${response.status}: ${response.statusText})`);
   }
 

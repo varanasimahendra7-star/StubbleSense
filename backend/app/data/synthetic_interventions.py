@@ -34,6 +34,7 @@ def seed_initial_interventions(db: Session) -> int:
         target_acres=45.0,
         status="Completed",
         completion_status="Field-Verified",
+        assigned_officer_id="DEMO-USER-FIELD-01",
         created_at=BASE_TIME - timedelta(days=2, hours=4),
         updated_at=BASE_TIME - timedelta(hours=18),
         notes="High-priority in-situ seeding across North block farmland clusters to address nearby active burn hotspots.",

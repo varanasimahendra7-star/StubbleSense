@@ -1,3 +1,4 @@
+import { notifyAuthExpired } from './auth';
 import { API_BASE_URL } from '../config';
 import type { VillageRiskResponse } from '../types/api';
 
@@ -30,9 +31,13 @@ export async function getVillageRiskRankings(params?: {
     headers: {
       Accept: 'application/json',
     },
+    credentials: 'include',
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      notifyAuthExpired();
+    }
     throw new Error(`Failed to load village risk rankings (HTTP ${response.status}: ${response.statusText})`);
   }
 

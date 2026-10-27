@@ -2,11 +2,21 @@ export interface HealthResponse {
   status: string;
   app: string;
   environment: string;
+  demo_accounts_enabled?: boolean;
 }
 
 export type BackendStatus = 'loading' | 'connected' | 'unavailable';
 
-export type NavigationTab = 'overview' | 'map' | 'risk' | 'allocation' | 'tracking';
+export type NavigationTab =
+  | 'overview'
+  | 'map'
+  | 'risk'
+  | 'allocation'
+  | 'tracking'
+  | 'field-ops'
+  | 'equipment-ops'
+  | 'users'
+  | 'staff';
 
 export interface FireObservation {
   id: string;
@@ -148,6 +158,7 @@ export interface InterventionItem {
   target_acres: number;
   status: InterventionStatus;
   completion_status: CompletionStatus;
+  assigned_officer_id?: string | null;
   created_at: string;
   updated_at: string;
   notes?: string | null;
@@ -161,6 +172,7 @@ export interface InterventionCreatePayload {
   equipment_id?: string | null;
   intervention_type: string;
   target_acres: number;
+  assigned_officer_id?: string | null;
   notes?: string | null;
   requested_by: string;
 }
@@ -185,4 +197,66 @@ export interface InterventionListResponse {
   items: InterventionItem[];
 }
 
+export type UserRole = 'super_admin' | 'admin' | 'field_officer' | 'equipment_coordinator';
 
+export type UserAccountStatus = 'active' | 'pending' | 'rejected' | 'deactivated' | 'deleted' | string;
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  full_name: string;
+  role: UserRole;
+  is_active: boolean;
+  status?: UserAccountStatus;
+  is_synthetic: boolean;
+}
+
+export interface UserDeleteResponse {
+  message: string;
+  user_id?: string;
+  deleted_id: string;
+  soft_deleted: boolean;
+}
+
+export interface AuthResponse {
+  user: UserProfile;
+  csrf_token?: string;
+  message: string;
+}
+
+export interface DemoAccountItem {
+  role: UserRole;
+  label: string;
+  username: string;
+  password: string;
+  description: string;
+}
+
+export interface DemoAccountsResponse {
+  enabled: boolean;
+  notice: string;
+  accounts: DemoAccountItem[];
+}
+
+export interface RolePolicyItem {
+  role: UserRole;
+  label: string;
+  description: string;
+  can_self_register: boolean;
+  requires_approval: boolean;
+}
+
+export interface RegistrationStatusResponse {
+  enabled: boolean;
+  auto_approve?: boolean;
+  notice: string;
+  policy: string;
+  roles: RolePolicyItem[];
+}
+
+export interface UserRegisterRequest {
+  username: string;
+  password: string;
+  full_name: string;
+  role: UserRole;
+}

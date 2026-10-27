@@ -12,3 +12,4 @@ def test_health_check_returns_200_and_expected_fields():
     assert payload["status"] == "ok"
     assert payload["app"] == "StubbleSense"
     assert "environment" in payload
+    assert "demo_accounts_enabled" in payload

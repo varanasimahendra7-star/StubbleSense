@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config';
+import { getCsrfToken, notifyAuthExpired } from './auth';
 import type {
   FieldVerificationPayload,
   InterventionCreatePayload,
@@ -36,9 +37,13 @@ export async function getInterventions(params?: {
     headers: {
       Accept: 'application/json',
     },
+    credentials: 'include',
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      notifyAuthExpired();
+    }
     throw new Error(`Failed to load interventions (HTTP ${response.status}: ${response.statusText})`);
   }
 
@@ -65,9 +70,13 @@ export async function getInterventionDetail(id: string): Promise<InterventionIte
     headers: {
       Accept: 'application/json',
     },
+    credentials: 'include',
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      notifyAuthExpired();
+    }
     throw new Error(`Failed to fetch intervention ${id} (HTTP ${response.status})`);
   }
 
@@ -78,12 +87,15 @@ export async function getInterventionDetail(id: string): Promise<InterventionIte
  * Create a new residue intervention linked to a village and optional machinery.
  */
 export async function createIntervention(payload: InterventionCreatePayload): Promise<InterventionItem> {
+  const csrf = getCsrfToken();
   const response = await fetch(`${API_BASE_URL}/api/interventions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
     },
+    credentials: 'include',
     body: JSON.stringify(payload),
   });
 
@@ -108,12 +120,15 @@ export async function updateInterventionStatus(
   id: string,
   payload: InterventionStatusUpdatePayload
 ): Promise<InterventionItem> {
+  const csrf = getCsrfToken();
   const response = await fetch(`${API_BASE_URL}/api/interventions/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
     },
+    credentials: 'include',
     body: JSON.stringify(payload),
   });
 
@@ -138,12 +153,15 @@ export async function recordFieldVerification(
   id: string,
   payload: FieldVerificationPayload
 ): Promise<InterventionItem> {
+  const csrf = getCsrfToken();
   const response = await fetch(`${API_BASE_URL}/api/interventions/${encodeURIComponent(id)}/verify`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
     },
+    credentials: 'include',
     body: JSON.stringify(payload),
   });
 

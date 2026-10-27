@@ -1,3 +1,4 @@
+import { notifyAuthExpired } from './auth';
 import { API_BASE_URL } from '../config';
 import type { EquipmentListResponse, VillageAllocationResponse } from '../types/api';
 
@@ -30,9 +31,13 @@ export async function getEquipmentList(params?: {
     headers: {
       Accept: 'application/json',
     },
+    credentials: 'include',
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      notifyAuthExpired();
+    }
     throw new Error(`Failed to load equipment list (HTTP ${response.status}: ${response.statusText})`);
   }
 
@@ -79,9 +84,13 @@ export async function getEquipmentRecommendations(
     headers: {
       Accept: 'application/json',
     },
+    credentials: 'include',
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      notifyAuthExpired();
+    }
     let detailMsg = response.statusText;
     try {
       const errJson = (await response.json()) as { detail?: string };

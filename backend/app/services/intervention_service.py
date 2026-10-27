@@ -47,6 +47,7 @@ def get_interventions(
     status: Optional[str] = None,
     completion_status: Optional[str] = None,
     district: Optional[str] = None,
+    assigned_officer_id: Optional[str] = None,
 ) -> List[InterventionModel]:
     """Retrieve interventions with optional filtering."""
     ensure_seeded_data(db)
@@ -60,6 +61,8 @@ def get_interventions(
         query = query.filter(InterventionModel.completion_status == completion_status)
     if district and district != "all":
         query = query.filter(InterventionModel.district == district)
+    if assigned_officer_id:
+        query = query.filter(InterventionModel.assigned_officer_id == assigned_officer_id)
 
     return query.order_by(InterventionModel.created_at.desc()).all()
 
@@ -105,6 +108,7 @@ def create_intervention(db: Session, payload: InterventionCreate) -> Interventio
         target_acres=payload.target_acres,
         status="Proposed",
         completion_status="Pending",
+        assigned_officer_id=payload.assigned_officer_id,
         created_at=now,
         updated_at=now,
         notes=payload.notes,

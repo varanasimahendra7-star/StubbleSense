@@ -1,6 +1,8 @@
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.core.dependencies import get_current_user, require_roles
+from app.models.user import UserModel
 from app.schemas.equipment import EquipmentListResponse, VillageAllocationResponse
 from app.services.equipment_allocation import (
     get_all_equipment,
@@ -16,6 +18,7 @@ def list_equipment(
     status: Optional[str] = Query(None, description="Filter by status (Available, In-Use, Maintenance)"),
     district: Optional[str] = Query(None, description="Filter by district"),
     state: Optional[str] = Query(None, description="Filter by state (Punjab, Haryana)"),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Retrieve synthetic agricultural machinery units stationed across CHCs and depots."""
     items = get_all_equipment(
@@ -36,6 +39,7 @@ def get_village_equipment_recommendations(
     max_distance_km: float = Query(50.0, ge=1.0, le=200.0, description="Maximum search radius in kilometers"),
     include_unavailable: bool = Query(False, description="Whether to include In-Use or Maintenance machinery"),
     equipment_type: Optional[str] = Query(None, description="Optional machinery type filter"),
+    current_user: UserModel = Depends(require_roles("equipment_coordinator", "admin")),
 ):
     """Generate explainable equipment recommendations for a selected village.
 

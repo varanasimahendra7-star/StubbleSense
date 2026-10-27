@@ -3,9 +3,11 @@ from app.models.intervention import (
     InterventionAuditModel,
     InterventionModel,
 )
+from app.models.user import UserModel
 
 __all__ = [
     "InterventionModel",
     "InterventionAuditModel",
     "FieldVerificationModel",
+    "UserModel",
 ]
